@@ -84,7 +84,7 @@ class COMA:
         h : (n_layers, n_agents, hidden) hidden state of actor
         '''
         with torch.no_grad():
-            q = critic(s[np.newaxis, ...], u[np.newaxis, ...]).squeeze()
+            q = self.critic(s[np.newaxis, ...], u[np.newaxis, ...]).squeeze()
         pi, h_new = actor(s, h) # (n_agents, n_actions), (n_layers, T, hidden)
 
         # get counterfactual actions
