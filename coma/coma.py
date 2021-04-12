@@ -1,6 +1,6 @@
 import torch 
 import numpy as np 
-from buffer import EpisodicBuffer
+from coma.buffer import EpisodicBuffer
 
 class COMA:
 
