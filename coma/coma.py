@@ -42,6 +42,8 @@ class COMA:
         return [int(np.random.choice(self.n_actions, p = a_ * (1.0 - eps) + eps/self.n_actions)) for a_ in a]
         
     def train(self):
+        device = self.device
+
         self.compute_targets()
         states, actions, targets = self.buffer.state, self.buffer.action, self.buffer.targets 
 
