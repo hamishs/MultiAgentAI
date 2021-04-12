@@ -85,7 +85,7 @@ class COMA:
         '''
         with torch.no_grad():
             q = self.critic(s[np.newaxis, ...], u[np.newaxis, ...]).squeeze()
-        pi, h_new = actor(s, h) # (n_agents, n_actions), (n_layers, T, hidden)
+        pi, h_new = self.actor(s, h) # (n_agents, n_actions), (n_layers, T, hidden)
 
         # get counterfactual actions
         cf_actions = u.unsqueeze(0).unsqueeze(0).repeat(self.n_agents, self.n_actions, 1) # (n_agents, n_actions, n_agents)
