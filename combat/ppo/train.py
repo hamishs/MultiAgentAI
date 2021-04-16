@@ -13,6 +13,7 @@ def train(cfg):
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	# make env and agents
+	cfg.n_actions = cfg.n_agents + 5
 	env = Combat(grid_shape=(cfg.grid_shape, cfg.grid_shape), n_agents=cfg.n_agents, n_opponents=cfg.n_agents)
 	critic = Critic(cfg.n_states, cfg.n_agents, cfg.n_actions, cfg.channels, cfg.kernel_size).to(device)
 	actor = Actor(cfg.n_states, cfg.n_actions, cfg.channels, cfg.kernel_size, cfg.hidden_size).to(device)

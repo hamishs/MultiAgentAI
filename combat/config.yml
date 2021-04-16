@@ -18,3 +18,4 @@ base:
     episodes: 6000
     train_freq: 1
     train_steps: 3
+    verbose: 20

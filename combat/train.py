@@ -6,6 +6,4 @@ if __name__ == '__main__':
 	args = train_parser.parse_args()
 	cfg = Loader(args)
 
-	cfg.verbose = 2
-	cfg.episodes = 10
 	train(cfg)
