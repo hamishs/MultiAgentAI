@@ -3,8 +3,8 @@ import torch.nn as nn
 import torch.nn.functional as F 
 import numpy as np 
 
-from combat.ppo.buffer import TrajectoryBuffer
-from combat.ppo.models import Actor, Critic
+from ppo.buffer import TrajectoryBuffer
+from ppo.models import Actor, Critic
 
 class PPO:
 	''' Proximal Policy Optimisation for single agent RL.'''

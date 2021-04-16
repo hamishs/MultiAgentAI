@@ -8,8 +8,8 @@ import numpy as np
 from gym import spaces
 from gym.utils import seeding
 
-from utils import MultiAgentActionSpace, MultiAgentObservationSpace
-from utils import draw_grid, fill_cell, write_cell_text
+from env.utils import MultiAgentActionSpace, MultiAgentObservationSpace
+from env.utils import draw_grid, fill_cell, write_cell_text
 
 logger = logging.getLogger(__name__)
 

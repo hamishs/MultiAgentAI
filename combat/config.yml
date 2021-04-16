@@ -1,0 +1,20 @@
+
+base:
+    grid_shape: 15
+    n_agents: 5
+    n_states: 6
+    n_actions: 10
+    gamma: 0.99
+    lamda: 0.7
+    epsilon: 0.2
+    v_weight: 1.0
+    e_weight: 0.01
+    buffer_size: 300
+    channels: 32
+    kernel_size: 3
+    hidden_size: 32
+    lr_actor: 0.005
+    lr_critic: 0.005
+    episodes: 6000
+    train_freq: 1
+    train_steps: 3
