@@ -4,11 +4,16 @@ from ppo.models import Actor, Critic
 from env.combat import Combat
 
 import torch
+import wandb
 import numpy as np 
 import pandas as pd
 import os
 
 def train(cfg):
+
+	wandb.init(project='ma_combat', entity='hamishs',
+		config = {k:v for k,v in cfg.__dict__.items() if isinstance(v, (float, int, str))})
+	config = wandb.config
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -20,6 +25,8 @@ def train(cfg):
 	mappo = MAPPO(cfg.n_states, cfg.n_actions, cfg.n_agents, cfg.gamma, cfg.lamda,
 				  cfg.epsilon, cfg.v_weight, cfg.e_weight, cfg.buffer_size,
 				  actor, critic, cfg.lr_actor, cfg.lr_critic, device)
+	wandb.watch(critic)
+	wandb.watch(actor)
 
 	# train
 	ep_rewards = []
@@ -67,11 +74,15 @@ def train(cfg):
 				loss = mappo.train()
 				losses.append(loss)
 		
-		if episode % cfg.verbose == 0:
-			print('Episode {} Reward {:.4f}  Win rate {:.2f} Loss {:.4f}'.format(episode,                                                
-				np.mean(ep_rewards[-cfg.verbose:]),
-				100*np.mean(win[-cfg.verbose:]),
-				np.mean(losses[-cfg.verbose*cfg.train_steps:])))
+		if episode % cfg.verbose == 0:                                             
+				_mean_reward = np.mean(ep_rewards[-cfg.verbose:]),
+				_win_rate = 100*np.mean(win[-cfg.verbose:]),
+				_mean_loss = np.mean(losses[-cfg.verbose*cfg.train_steps:])
+			print('Episode {} Reward {:.4f}  Win rate {:.2f} Loss {:.4f}'.format(episode,
+				_mean_reward,
+				_win_rate,
+				_mean_loss))
+			wandb.log({'episode':episode, 'reward':_mean_reward, 'win_rate':_win_rate, 'loss':_mean_loss})
 
 	# save model and results
 	os.mkdir(cfg.run_name)
