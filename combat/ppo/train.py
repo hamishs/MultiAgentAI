@@ -74,10 +74,10 @@ def train(cfg):
 				loss = mappo.train()
 				losses.append(loss)
 		
-		if episode % cfg.verbose == 0:                                             
-				_mean_reward = np.mean(ep_rewards[-cfg.verbose:]),
-				_win_rate = 100*np.mean(win[-cfg.verbose:]),
-				_mean_loss = np.mean(losses[-cfg.verbose*cfg.train_steps:])
+		if episode % cfg.verbose == 0:
+			_mean_reward = np.mean(ep_rewards[-cfg.verbose:])
+			_win_rate = 100*np.mean(win[-cfg.verbose:])
+			_mean_loss = np.mean(losses[-cfg.verbose*cfg.train_steps:])
 			print('Episode {} Reward {:.4f}  Win rate {:.2f} Loss {:.4f}'.format(episode,
 				_mean_reward,
 				_win_rate,
@@ -90,4 +90,5 @@ def train(cfg):
 	torch.save({'actor_state_dict':actor.state_dict(),
 		'critic_state_dict':critic.state_dict()},
 		cfg.run_name+'/checkpoint')
+	wandb.finish()
 
