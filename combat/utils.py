@@ -96,6 +96,30 @@ class train_parser:
 	    '--verbose', default=20,
 	    type=int, help="Frequency of episodes to print stats."
 	)
+	parser.add_argument(
+		'--activation', default='relu',
+		type=str, help="Activation function either relu or tanh."
+	)
+	parser.add_argument(
+		'--num_cnn_layers', default=3,
+		type=str, help="Activation function either relu or tanh."
+	)
+	parser.add_argument(
+		'--actor_layers', default=3,
+		type=str, help="Activation function either relu or tanh."
+	)
+	parser.add_argument(
+		'--critic_layers', default=2,
+		type=str, help="Activation function either relu or tanh."
+	)
+	parser.add_argument(
+		'--wandb', action='store_true',
+		help="Will record run in weights and biases."
+	)
+	parser.add_argument(
+		'--save', action='store_true',
+		help="Save results and model."
+	)
 
 	@staticmethod
 	def parse_args():

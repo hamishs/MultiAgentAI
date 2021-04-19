@@ -4,25 +4,23 @@ import torch.nn.functional as F
 
 class Actor(nn.Module):
 
-    def __init__(self, n_states, n_actions, channels, kernel_size, hidden_size):
+    def __init__(self, n_states, n_actions, channels, kernel_size, hidden_size,
+        num_cnn_layers = 3, num_layers=3, activation=nn.ReLU):
         super().__init__()
 
         self.n_states = n_states
         self.n_actions = n_actions
         self.hidden_size = hidden_size
 
-        self.cnn = nn.Sequential(
-            nn.Conv2d(n_states, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU())
-        self.mlp = nn.Sequential(
-            nn.Linear(channels, hidden_size),
-            nn.ReLU(),
-            nn.Linear(hidden_size, hidden_size),
-            nn.ReLU())
+        c_layers = [nn.Conv2d(n_states, channels, kernel_size, padding=(kernel_size - 1)//2), activation()]
+        for _ in range(num_cnn_layers - 1):
+            c_layers.extend([nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2), activation()])
+        self.cnn = nn.Sequential(*c_layers)
+
+        mlp_layers = [nn.Linear(channels, hidden_size), activation()]
+        for _ in range(num_layers - 2):
+            mlp_layers.extend([nn.Linear(hidden_size, hidden_size), activation()])
+        self.mlp = nn.Sequential(*mlp_layers)
         self.final = nn.Linear(hidden_size, n_actions)
 
     def forward(self, s, h = None):
@@ -44,7 +42,8 @@ class Actor(nn.Module):
 
 class Critic(nn.Module):
 
-    def __init__(self, n_states, n_agents, n_actions, channels, kernel_size):
+    def __init__(self, n_states, n_agents, n_actions, channels, kernel_size, hidden_size,
+        num_cnn_layers = 3, num_layers=2, activation=nn.ReLU()):
         super().__init__()
 
         self.n_states = n_states 
@@ -52,20 +51,16 @@ class Critic(nn.Module):
         self.n_actions = n_actions
         self.channels = channels
 
-        self.cnn = nn.Sequential(
-            nn.Conv2d(n_states, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU(),
-            nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2),
-            nn.ReLU())
+        c_layers = [nn.Conv2d(n_states, channels, kernel_size, padding=(kernel_size - 1)//2), activation()]
+        for _ in range(num_cnn_layers - 1):
+            c_layers.extend([nn.Conv2d(channels, channels, kernel_size, padding=(kernel_size - 1)//2), activation()])
+        self.cnn = nn.Sequential(*c_layers)
 
-        self.mlp = nn.Sequential(
-            nn.Linear(channels * n_agents, channels * n_agents),
-            nn.ReLU(),
-            nn.Linear(channels * n_agents, channels * n_agents // 2),
-            nn.ReLU(),
-            nn.Linear(channels * n_agents // 2, 1))
+        mlp_layers = [nn.Linear(channels * n_agents, hidden_size), activation()]
+        for _ in range(num_layers - 2):
+            mlp_layers.extend([nn.Linear(hidden_size, hidden_size), activation()])
+        self.mlp = nn.Sequential(*mlp_layers)
+        self.final = nn.Linear(hidden_size, 1)
 
     def forward(self, s):
         '''
@@ -79,6 +74,7 @@ class Critic(nn.Module):
         s = s.reshape(-1, self.n_agents, self.channels).reshape(-1, self.n_agents*self.channels)
 
         # mlp
-        s = self.mlp(s)  # (batch, 1)
+        s = self.mlp(s) # (batch, hidden_size)
+        s = self.final(s)  # (batch, 1)
 
         return s

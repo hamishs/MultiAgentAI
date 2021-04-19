@@ -11,22 +11,29 @@ import os
 
 def train(cfg):
 
-	wandb.init(project='ma_combat', entity='hamishs',
-		config = {k:v for k,v in cfg.__dict__.items() if isinstance(v, (float, int, str))})
-	config = wandb.config
+	if cfg.wandb:
+		wandb.init(project='ma_combat', entity='hamishs',
+			config = {k:v for k,v in cfg.__dict__.items() if isinstance(v, (float, int, str))})
+		config = wandb.config
+
+	activation = torch.nn.ReLU if cfg.activation == 'relu' else torch.nn.Tanh
 
 	device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 	# make env and agents
 	cfg.n_actions = cfg.n_agents + 5
 	env = Combat(grid_shape=(cfg.grid_shape, cfg.grid_shape), n_agents=cfg.n_agents, n_opponents=cfg.n_agents)
-	critic = Critic(cfg.n_states, cfg.n_agents, cfg.n_actions, cfg.channels, cfg.kernel_size).to(device)
-	actor = Actor(cfg.n_states, cfg.n_actions, cfg.channels, cfg.kernel_size, cfg.hidden_size).to(device)
+	critic = Critic(cfg.n_states, cfg.n_agents, cfg.n_actions, cfg.channels, cfg.kernel_size, cfg.hidden_size,
+		num_cnn_layers=cfg.num_cnn_layers, num_layers=cfg.actor_layers, activation=activation).to(device)
+	actor = Actor(cfg.n_states, cfg.n_actions, cfg.channels, cfg.kernel_size, cfg.hidden_size,
+		num_cnn_layers=cfg.num_cnn_layers, activation=activation).to(device)
 	mappo = MAPPO(cfg.n_states, cfg.n_actions, cfg.n_agents, cfg.gamma, cfg.lamda,
 				  cfg.epsilon, cfg.v_weight, cfg.e_weight, cfg.buffer_size,
 				  actor, critic, cfg.lr_actor, cfg.lr_critic, device)
-	wandb.watch(critic)
-	wandb.watch(actor)
+	
+	if cfg.wandb:
+		wandb.watch(critic)
+		wandb.watch(actor)
 
 	# train
 	ep_rewards = []
@@ -82,13 +89,18 @@ def train(cfg):
 				_mean_reward,
 				_win_rate,
 				_mean_loss))
-			wandb.log({'episode':episode, 'reward':_mean_reward, 'win_rate':_win_rate, 'loss':_mean_loss})
+			if cfg.wandb:
+				wandb.log({'episode':episode,
+					'reward':_mean_reward,
+					'win_rate':_win_rate,
+					'loss':_mean_loss})
 
 	# save model and results
-	os.mkdir(cfg.run_name)
-	pd.DataFrame({'reward' : ep_rewards, 'win_rate' : win}).to_csv(cfg.run_name+'/results.csv', index=False)
-	torch.save({'actor_state_dict':actor.state_dict(),
-		'critic_state_dict':critic.state_dict()},
-		cfg.run_name+'/checkpoint')
-	wandb.finish()
+	if cfg.save:
+		os.mkdir(cfg.run_name)
+		pd.DataFrame({'reward' : ep_rewards, 'win_rate' : win}).to_csv(cfg.run_name+'/results.csv', index=False)
+		torch.save({'actor_state_dict':actor.state_dict(),
+			'critic_state_dict':critic.state_dict()},
+			cfg.run_name+'/checkpoint')
+	if cfg.wandb: wandb.finish()
 
