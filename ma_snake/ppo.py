@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F 
 import numpy as np 
+from copy import deepcopy
 
 from ma_snake.buffer import TrajectoryBuffer
 
