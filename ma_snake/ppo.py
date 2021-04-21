@@ -4,14 +4,14 @@ import torch.nn.functional as F
 import numpy as np 
 from copy import deepcopy
 
-from ma_snake.buffer import TrajectoryBuffer
+from buffer import TrajectoryBuffer
 
 class MAPPO:
     ''' Multi-agent Proximal Policy Optimisation. Shared actor parameters.
     Omniscient critic.'''
 
     def __init__(self, board_shape, n_actions, n_agents, gamma, lmda, epsilon, v_weight,
-                 e_weight, buffer_size, model, lr, device, max_to_keep):
+                 e_weight, buffer_size, model, lr, device, max_to_keep=0):
 
         self.board_l, self.board_w = board_shape
         self.n_actions = n_actions

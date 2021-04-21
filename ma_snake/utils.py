@@ -3,54 +3,35 @@ import numpy as np
 import argparse
 import yaml
 
-def action_wrapper(joint_action):
+def action_wrapper(joint_action, action_dim=4):
 	'''
 	Converst lits of actions to env action.
 	:param joint_action:
 	:return: wrapped joint action: one-hot
 	'''
 	joint_action_ = []
-	for a in range(env.n_player):
+	for a in range(len(joint_action)):
 		action_a = joint_action[a]
-		each = [0] * env.action_dim
+		each = [0] * action_dim
 		each[action_a] = 1
 		action_one_hot = [[each]]
 		joint_action_.append([action_one_hot[0][0]])
 	return joint_action_
 
-def get_rewards(s):
+def get_rewards(s, n_agents=3):
 	''' Updates the reward for each agent if their team has the longest snake.'''
 
 	s = np.array(s).squeeze()
-	snake_lengths = [(s == i).sum() for i in range(2, cfg.n_agents * 2 + 2)]
-	team_1, team_2 = max(snake_lengths[:cfg.n_agents]), max(snake_lengths[cfg.n_agents:])
+	snake_lengths = [(s == i).sum() for i in range(2, n_agents * 2 + 2)]
+	team_1, team_2 = max(snake_lengths[:n_agents]), max(snake_lengths[n_agents:])
 	max_len = max([team_1, team_2])
 
 	if team_1 > team_2:
-		return [1.0] * cfg.n_agents + [-1.0] * cfg.n_agents, max_len
+		return [1.0] * n_agents + [-1.0] * n_agents, max_len
 	elif team_1 < team_2:
-		return [-1.0] * cfg.n_agents + [1.0] * cfg.n_agents, max_len
+		return [-1.0] * n_agents + [1.0] * n_agents, max_len
 	else:
-		return [0.0] * 2 * cfg.n_agents, max_len
-
-def evaluate(episodes):
-	''' Tests the agent against a random policy.'''
-	results = []
-	for episode in range(episodes):
-		s = env.reset()
-		d = False
-		while not d:
-			a1 = mappo.act(torch.IntTensor(s).reshape(cfg.board_l, cfg.board_w), exploration = False)[:3]
-			a2 = np.random.randint(cfg.n_actions, size = (3,)).tolist()
-			a = a1 + a2
-			s, r, d, _, _ = env.step(action_wrapper(a))
-		
-		# check winner
-		w = get_rewards(s)[0][0]
-		results.append(w)
-	
-	# return win rate
-	return np.mean(results)
+		return [0.0] * 2 * n_agents, max_len
 
 class Loader:
     def __init__(self, input_obj):
@@ -108,6 +89,10 @@ class train_parser:
 	parser.add_argument(
 	    '--d_model', default=None,
 	    type=int, help="Model inner dimension."
+	)
+	parser.add_argument(
+	    '--activation', default=None,
+	    type=str, help="Either relu or tanh activation."
 	)
 	parser.add_argument(
 	    '--kernel_size', default=None,

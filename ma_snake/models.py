@@ -4,34 +4,34 @@ import torch.nn.functional as F
 
 class Model(nn.Module):
 
-    def __init__(self, n_agents, n_actions, d_model, kernel_size):
+    def __init__(self, n_agents, n_actions, d_model, kernel_size, activation=nn.ReLU):
         super().__init__() 
 
         self.embedding = nn.Embedding(2 * n_agents + 2, d_model)
 
         self.cnn = nn.Sequential(
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.Tanh(),
+            nn.activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.Tanh(),
+            nn.activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.Tanh(),
+            nn.activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.Tanh())
+            nn.activation())
         
         self.mlp_policy = nn.Sequential(
             nn.Linear(2 * d_model, d_model),
-            nn.Tanh(),
+            nn.activation(),
             nn.Linear(d_model, d_model),
-            nn.Tanh(),
+            nn.activation(),
             nn.Linear(d_model, n_actions),
             nn.Softmax(dim = -1))
         
         self.mlp_value = nn.Sequential(
             nn.Linear(d_model, d_model),
-            nn.Tanh(),
+            nn.activation(),
             nn.Linear(d_model, d_model),
-            nn.Tanh(),
+            nn.activation(),
             nn.Linear(d_model, 1))
 
     def forward(self, s):
