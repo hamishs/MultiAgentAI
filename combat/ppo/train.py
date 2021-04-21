@@ -80,20 +80,16 @@ def train(cfg):
 			for _ in range(cfg.train_steps):
 				loss = mappo.train()
 				losses.append(loss)
-		
+	
 		if episode % cfg.verbose == 0:
-			_mean_reward = np.mean(ep_rewards[-cfg.verbose:])
-			_win_rate = 100*np.mean(win[-cfg.verbose:])
-			_mean_loss = np.mean(losses[-cfg.verbose*cfg.train_steps:])
 			print('Episode {} Reward {:.4f}  Win rate {:.2f} Loss {:.4f}'.format(episode,
-				_mean_reward,
-				_win_rate,
-				_mean_loss))
-			if cfg.wandb:
-				wandb.log({'episode':episode,
-					'reward':_mean_reward,
-					'win_rate':_win_rate,
-					'loss':_mean_loss})
+				np.mean(ep_rewards[-cfg.verbose:]),
+				100*np.mean(win[-cfg.verbose:]),
+				np.mean(losses[-cfg.verbose*cfg.train_steps:])))
+		if cfg.wandb:
+			wandb.log({'reward':ep_rewards[-1],
+				'win_rate':100*win[-1],
+				'loss':np.mean(losses[-cfg.train_steps])})
 
 	# save model and results
 	if cfg.save:
