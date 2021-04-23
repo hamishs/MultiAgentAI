@@ -103,7 +103,7 @@ class train_parser:
 	    type=float, help="Discount rate."
 	)
 	parser.add_argument(
-	    '--lamda', default=None,
+	    '--lmda', default=None,
 	    type=float, help="Lambda return constant."
 	)
 	parser.add_argument(
