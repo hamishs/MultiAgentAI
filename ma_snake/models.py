@@ -11,27 +11,27 @@ class Model(nn.Module):
 
         self.cnn = nn.Sequential(
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.activation(),
+            activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.activation(),
+            activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.activation(),
+            activation(),
             nn.Conv2d(d_model, d_model, kernel_size),
-            nn.activation())
+            activation())
         
         self.mlp_policy = nn.Sequential(
             nn.Linear(2 * d_model, d_model),
-            nn.activation(),
+            activation(),
             nn.Linear(d_model, d_model),
-            nn.activation(),
+            activation(),
             nn.Linear(d_model, n_actions),
             nn.Softmax(dim = -1))
         
         self.mlp_value = nn.Sequential(
             nn.Linear(d_model, d_model),
-            nn.activation(),
+            activation(),
             nn.Linear(d_model, d_model),
-            nn.activation(),
+            activation(),
             nn.Linear(d_model, 1))
 
     def forward(self, s):

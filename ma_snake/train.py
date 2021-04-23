@@ -3,6 +3,7 @@ from env.chooseenv import make
 from ppo import MAPPO
 from utils import action_wrapper, get_rewards
 from models import Model
+from evaluate import Evaluate
 
 import numpy as np
 import torch 
@@ -24,29 +25,12 @@ def train(cfg):
 		cfg.kernel_size, activation=activation).to(device)
 	mappo = MAPPO((cfg.board_l, cfg.board_w), cfg.n_actions,
 		2*cfg.n_agents, cfg.gamma, cfg.lmda, cfg.epsilon,
-		cfg.v_weight, cfg.e_weight, cfg.buffer_size, model, cfg.lr, device)
+		cfg.v_weight, cfg.e_weight, cfg.buffer_size, model, cfg.lr, device,
+		max_to_keep=cfg.max_to_keep)
+	evaluator = Evaluate(env, cfg)
 
 	if cfg.wandb:
 		wandb.watch(model)
-
-	def evaluate(episodes):
-		''' Tests the agent against a random policy.'''
-		results = []
-		for episode in range(episodes):
-			s = env.reset()
-			d = False
-			while not d:
-				a1 = mappo.act(torch.IntTensor(s).reshape(cfg.board_l, cfg.board_w), exploration = False)[:3]
-				a2 = np.random.randint(cfg.n_actions, size = (3,)).tolist()
-				a = a1 + a2
-				s, r, d, _, _ = env.step(action_wrapper(a))
-			
-			# check winner
-			w = get_rewards(s)[0][0]
-			results.append(w)
-		
-		# return win rate
-		return np.mean(results)
 
 	max_snakes, test_rates, losses = [], [], []
 	for episode in range(cfg.episodes):
@@ -83,19 +67,21 @@ def train(cfg):
 		if cfg.wandb:
 			wandb.log({'max_snake' : max_snakes[-1],
 				'loss' : np.mean(losses[-cfg.train_steps:])})
+
+		if episode % cfg.record_model == 0:
+			mappo.update_prev_policies()
 		
-		if episode % cfg.test_freq == 0:
-			test_rate = evaluate(cfg.test_episodes)*0.5 + 0.5
-			test_rates.append(test_rate)
-			print('Test win rate {:.4f}'.format(test_rate))
-			wandb.log({'test_rate':test_rate})
+		if episode % cfg.test_freq == 0 and episode > 0:
+			elo_ratings = mappo.update_elo_ratings(evaluator, episodes=cfg.test_episodes, K=32)
+			print('Elo ratings:', elo_ratings)
+			print('Current elo {:.4f}'.format(elo_ratings[-1]))
+			if cfg.wandb:
+				wandb.log({'elo':elo_ratings[-1]})
 
 	# save model and results
 	if cfg.save:
 		os.mkdir(cfg.run_name)
-		pd.DataFrame({'reward' : ep_rewards, 'win_rate' : win}).to_csv(cfg.run_name+'/results.csv', index=False)
-		torch.save({'actor_state_dict':actor.state_dict(),
-			'critic_state_dict':critic.state_dict()},
+		torch.save({'model_state_dict':model.state_dict()},
 			cfg.run_name+'/checkpoint')
 	if cfg.wandb:
 		wandb.finish()

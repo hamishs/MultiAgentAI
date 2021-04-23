@@ -5,10 +5,11 @@ import numpy as np
 from copy import deepcopy
 
 from buffer import TrajectoryBuffer
+from evaluate import Evaluate
 
 class MAPPO:
-    ''' Multi-agent Proximal Policy Optimisation. Shared actor parameters.
-    Omniscient critic.'''
+    """ Multi-agent Proximal Policy Optimisation. Shared actor parameters.
+    Omniscient critic."""
 
     def __init__(self, board_shape, n_actions, n_agents, gamma, lmda, epsilon, v_weight,
                  e_weight, buffer_size, model, lr, device, max_to_keep=0):
@@ -35,9 +36,12 @@ class MAPPO:
 
         self.max_to_keep = max_to_keep
         self.prev_policies = []
+        self.elo_ratings = []
 
-    def act(self, s, return_prob = False, exploration = True):
+    def act(self, s, model=None, return_prob = False, exploration = True):
         # s : (board_l, board_w) current board state
+        policy = model.policy if model is not None else self.policy
+
         s = s.unsqueeze(0).repeat(self.n_agents, 1, 1) # (n_agents, board_l, board_w)
         agent_ids = torch.arange(self.n_agents) + 2 # (n_agents)
         s, agent_ids = self.to_device((s, agent_ids))
@@ -46,7 +50,7 @@ class MAPPO:
         ids1, ids2 = agent_ids[:3], agent_ids[3:]
 
         with torch.no_grad():
-            p = self.policy(s, agent_ids)
+            p = policy(s, agent_ids)
         p = p.cpu().numpy()
 
         actions, prob = [], []
@@ -104,7 +108,7 @@ class MAPPO:
         self.buffer.update(s, a, r, d, s_next, pi)
 
     def compute_advantages(self, l):
-        ''' Compute advantage estimates for the previous l steps of the buffer.'''
+        """ Compute advantage estimates for the previous l steps of the buffer."""
 
         s = torch.IntTensor(self.buffer.state[-l:]).reshape(-1, self.board_l, self.board_w) # (l, board_l, board_w)
         r = torch.FloatTensor(self.buffer.reward[-l:]) # (l, n_agents)
@@ -138,5 +142,27 @@ class MAPPO:
     def update_prev_policies(self):
         if len(self.prev_policies) + 1 >= self.max_to_keep:
             self.prev_policies.pop(0)
+            self.elo_ratings.pop(0)
         
         self.prev_policies.append(deepcopy(self.model))
+        self.elo_ratings.append(1000)
+
+    def update_elo_ratings(self, evaluator, episodes=10, K=32):
+        """ Runs an ELO tournement of the current stored policies."""
+
+        # construct agents
+        agents = []
+        for agent in self.prev_policies:
+            agents.append(lambda s: self.act(torch.IntTensor(s).reshape(self.board_l, self.board_w),
+                model=agent,
+                exploration = False))
+
+        # add current policy
+        agents.append(lambda s: self.act(torch.IntTensor(s).reshape(self.board_l, self.board_w),
+                exploration = False))
+
+        ratings = evaluator.elo_tourne(agents, ratings=self.elo_ratings, episodes=episodes, K=K)
+        self.elo_ratings = ratings[1:-1].tolist()
+
+        return ratings
+

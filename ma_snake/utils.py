@@ -150,6 +150,14 @@ class train_parser:
 	    '--verbose', default=None,
 	    type=int, help="Frequency of episodes to print stats."
 	)
+	parser.add_argument(
+	    '--max_to_keep', default=None,
+	    type=int, help="Max number of previous policies to store."
+	)
+	parser.add_argument(
+	    '--record_model', default=None,
+	    type=int, help="Frequency of updating stored models."
+	)
 
 	@staticmethod
 	def parse_args():
