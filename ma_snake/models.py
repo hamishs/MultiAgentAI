@@ -15,8 +15,8 @@ class Model(nn.Module):
             cnn_layers.extend([nn.Conv2d(d_model, d_model, kernel_size), activation()])
         self.cnn = nn.Sequential(*cnn_layers)
         
-        policy_layers = []
-        for _ in range(num_policy_layers-1):
+        policy_layers = [nn.Linear(2*d_model, d_model), activation()]
+        for _ in range(num_policy_layers-2):
             policy_layers.extend([nn.Linear(d_model, d_model), activation()])
         policy_layers.extend([nn.Linear(d_model, n_actions), nn.Softmax(dim = -1)])
         self.mlp_policy = nn.Sequential(*policy_layers)
