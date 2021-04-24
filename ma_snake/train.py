@@ -24,7 +24,9 @@ def train(cfg):
 	env = make('snakes_3v3')
 	activation = nn.Tanh if cfg.activation == 'tanh' else nn.ReLU
 	model = Model(cfg.n_agents, cfg.n_actions, cfg.d_model,
-		cfg.kernel_size, activation=activation).to(device)
+		cfg.kernel_size, activation=activation, num_cnn_layers=cfg.num_cnn_layers,
+		num_policy_layers=cfg.num_policy_layers,
+		num_value_layers=cfg.num_value_layers).to(device)
 	mappo = MAPPO((cfg.board_l, cfg.board_w), cfg.n_actions,
 		2*cfg.n_agents, cfg.gamma, cfg.lmda, cfg.epsilon,
 		cfg.v_weight, cfg.e_weight, cfg.buffer_size, model, cfg.lr, device,

@@ -4,35 +4,28 @@ import torch.nn.functional as F
 
 class Model(nn.Module):
 
-    def __init__(self, n_agents, n_actions, d_model, kernel_size, activation=nn.ReLU):
+    def __init__(self, n_agents, n_actions, d_model, kernel_size, activation=nn.ReLU,
+        num_cnn_layers=3, num_policy_layers=3, num_value_layers=3):
         super().__init__() 
 
         self.embedding = nn.Embedding(2 * n_agents + 2, d_model)
 
-        self.cnn = nn.Sequential(
-            nn.Conv2d(d_model, d_model, kernel_size),
-            activation(),
-            nn.Conv2d(d_model, d_model, kernel_size),
-            activation(),
-            nn.Conv2d(d_model, d_model, kernel_size),
-            activation(),
-            nn.Conv2d(d_model, d_model, kernel_size),
-            activation())
+        cnn_layers = []
+        for _ in range(num_cnn_layers):
+            cnn_layers.extend([nn.Conv2d(d_model, d_model, kernel_size), activation()])
+        self.cnn = nn.Sequential(*cnn_layers)
         
-        self.mlp_policy = nn.Sequential(
-            nn.Linear(2 * d_model, d_model),
-            activation(),
-            nn.Linear(d_model, d_model),
-            activation(),
-            nn.Linear(d_model, n_actions),
-            nn.Softmax(dim = -1))
+        policy_layers = []
+        for _ in range(num_policy_layers-1):
+            policy_layers.extend([nn.Linear(d_model, d_model), activation()])
+        policy_layers.extend([nn.Linear(d_model, n_actions), nn.Softmax(dim = -1)])
+        self.mlp_policy = nn.Sequential(*policy_layers)
         
-        self.mlp_value = nn.Sequential(
-            nn.Linear(d_model, d_model),
-            activation(),
-            nn.Linear(d_model, d_model),
-            activation(),
-            nn.Linear(d_model, 1))
+        value_layers = []
+        for _ in range(num_value_layers-1):
+            value_layers.extend([nn.Linear(d_model, d_model), activation()])
+        value_layers.extend([nn.Linear(d_model, 1)])
+        self.mlp_value = nn.Sequential(*value_layers)
 
     def forward(self, s):
         '''

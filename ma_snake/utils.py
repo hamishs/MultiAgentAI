@@ -91,6 +91,18 @@ class train_parser:
 	    type=int, help="Model inner dimension."
 	)
 	parser.add_argument(
+	    '--num_cnn_layers', default=None,
+	    type=int, help="Number of CNN layers."
+	)
+	parser.add_argument(
+	    '--num_value_layers', default=None,
+	    type=int, help="Number of layers in value MLP."
+	)
+	parser.add_argument(
+	    '--num_policy_layers', default=None,
+	    type=int, help="Number of layers in policy MLP."
+	)
+	parser.add_argument(
 	    '--activation', default=None,
 	    type=str, help="Either relu or tanh activation."
 	)

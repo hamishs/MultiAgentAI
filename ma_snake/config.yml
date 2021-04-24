@@ -5,6 +5,9 @@ base:
     n_agents: 3
     n_actions: 4
     d_model: 32
+    num_cnn_layers: 3
+    num_policy_layers: 3
+    num_value_layers: 3
     activation: 'relu'
     kernel_size: 3
     gamma: 0.99
