@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn 
 import torch.nn.functional as F
 import wandb
+import os
 
 def train(cfg):
 
@@ -73,11 +74,13 @@ def train(cfg):
 			mappo.update_prev_policies()
 		
 		if episode % cfg.test_freq == 0 and episode > 0:
+			random_rate = evaluator.vs_random(mappo, episodes=100)
+			print('Win rate vs random agents: {:.4f}'.format(random_rate))
 			elo_ratings = mappo.update_elo_ratings(evaluator, episodes=cfg.test_episodes, K=32)
 			print('Elo ratings:', elo_ratings)
 			print('Current elo {:.4f}'.format(elo_ratings[-1]))
 			if cfg.wandb:
-				wandb.log({'elo':elo_ratings[-1]})
+				wandb.log({'elo':elo_ratings[-1], 'win_rate':random_rate})
 
 	# save model and results
 	if cfg.save:

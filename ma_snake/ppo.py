@@ -154,12 +154,10 @@ class MAPPO:
         agents = []
         for agent in self.prev_policies:
             agents.append(lambda s: self.act(torch.IntTensor(s).reshape(self.board_l, self.board_w),
-                model=agent,
-                exploration = False))
+                model=agent))
 
         # add current policy
-        agents.append(lambda s: self.act(torch.IntTensor(s).reshape(self.board_l, self.board_w),
-                exploration = False))
+        agents.append(lambda s: self.act(torch.IntTensor(s).reshape(self.board_l, self.board_w)))
 
         ratings = evaluator.elo_tourne(agents, ratings=self.elo_ratings, episodes=episodes, K=K)
         self.elo_ratings = ratings[1:-1].tolist()

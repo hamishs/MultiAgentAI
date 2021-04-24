@@ -37,11 +37,11 @@ class Evaluate:
 		# define agent functions
 		def agent1(s):
 			s = torch.IntTensor(s).reshape(self.board_l, self.board_w)
-			return mappo.act(s, exploration = False)
+			return mappo.act(s, return_prob=False)
 		agent2 = lambda s: np.random.randint(self.n_actions, size = (6,)).tolist()
 
 		# run evaluation
-		return one_vs_one(agent1, agent2, episodes=episodes)
+		return self.one_vs_one(agent1, agent2, episodes=episodes)
 
 	def elo_tourne(self, agents, ratings=None, episodes=10, K=32):
 		""" Run an elo tournement to rank the given agents."""

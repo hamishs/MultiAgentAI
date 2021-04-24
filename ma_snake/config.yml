@@ -17,8 +17,8 @@ base:
     episodes: 2000
     train_freq: 1
     train_steps: 3
-    test_freq: 20
-    test_episodes: 20
+    test_freq: 100
+    test_episodes: 30
     verbose: 5
     max_to_keep: 4
     record_model: 500
